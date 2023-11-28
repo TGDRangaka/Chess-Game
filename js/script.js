@@ -4,25 +4,28 @@ let board = [
     ['.', '.', '.', '.', '.', '.', '.', '.'],
     ['.', '.', '.', '.', '.', '.', '.', '.'],
     ['.', '.', '.', '.', '.', '.', '.', '.'],
-    ['.', '.', '.', '.', '.', '.', '.', '.'],
+    ['.', 'bp2', '.', '.', '.', '.', '.', '.'],
     ['wp1', 'wp2', 'wp3', 'wp4', 'wp5', 'wp6', 'wp7', 'wp8'],
     ['wr1', 'wn1', 'wb1', 'wq', 'wk', 'wb2', 'wn2', 'wr2']
 ];
+console.log(board);
 // let board = [
+//     ['.', '.', '.', '.', 'bk', '.', '.', '.'],
 //     ['.', '.', '.', '.', '.', '.', '.', '.'],
 //     ['.', '.', '.', '.', '.', '.', '.', '.'],
+//     ['.', '.', 'wr1', '.', '.', '.', '.', '.'],
+//     ['wq', '.', '.', 'bk', 'wk', '.', '.', '.'],
+//     ['.', '.', '.', '.', 'wp1', '.', '.', '.'],
 //     ['.', '.', '.', '.', '.', '.', '.', '.'],
-//     ['.', '.', '.', '.', '.', '.', '.', '.'],
-//     ['.', '.', '.', '.', '.', '.', '.', '.'],
-//     ['.', '.', '.', '.', '.', '.', '.', '.'],
-//     ['.', '.', '.', '.', '.', '.', '.', '.'],
-//     ['.', '.', '.', '.', '.', '.', '.', '.']
+//     ['.', '.', '.', '.', 'wk', '.', '.', '.']
 // ];
 let isWhiteTurn = true;
+let availableMoves = [];
+let selectedPiece = null;
 
 function setBoardDefaultColors(){
-    let color_1 = '#D18B47',
-        color_2 = '#FFBDA1';
+    let color_1 = 'rgba(209, 139, 71, .5)',
+        color_2 = 'rgba(255, 189, 161, .5)';
 
     for(let i = 0; i < 64; i++){
         if(i % 8 == 0){
@@ -34,6 +37,7 @@ function setBoardDefaultColors(){
         $('.square').eq(i++).css('backgroundColor', color_1);
         $('.square').eq(i).css('backgroundColor', color_2);
     }
+    $('.square').css('border', 'none');
 }
 setBoardDefaultColors();
 
@@ -50,38 +54,85 @@ function getElementIndex(ar){
 // set actions to the squares
 for(let i = 0; i < 64; i++){
     $('.square').eq(i).on('click', function(){
-        $('.square').css('boxShadow', 'none');
         // todo
         let index = getClickedIndex(i);
         let piece = board[index[0]][index[1]];
+
+        if(availableMoves.length > 0){
+            let move = availableMoves.findIndex((i)=>{
+                return getElementIndex(i) == getElementIndex(index);
+            })
+
+            if(move != -1){
+                // console.log(board);
+                // console.log(selectedPiece + " - " + availableMoves[move]);
+                movePiece(selectedPiece, availableMoves[move]);
+                moveElements(selectedPiece, availableMoves[move]);
+
+                availableMoves = [];
+                isWhiteTurn = !isWhiteTurn;
+                setBoardDefaultColors();
+                return;
+            }
+        }
+
         if(piece == '.'){
             return;
         }
 
         if(isWhiteTurn){
+            setBoardDefaultColors();
             if(piece.charAt(0) == 'b') return;
             console.log('white');
 
-            let moves = getValidMoves(index, piece);
-            if(moves.length == 0) return;
-            showAvailableMoves(moves);
-            console.log(moves);
+            availableMoves = getValidMoves(index, piece);
+            if(availableMoves.length == 0) return;
+            showAvailableMoves(availableMoves);
+            selectedPiece = index;
+            if(showAvailableMoves.length > 0) return;
 
             isWhiteTurn = false;
 
         }else{
+            setBoardDefaultColors();
             if(piece.charAt(0) == 'w') return;
             console.log('black');
 
-            let moves = getValidMoves(index, piece);
-            if(moves.length == 0) return;
-            showAvailableMoves(moves);
-            console.log(moves);
+            availableMoves = getValidMoves(index, piece);
+            if(availableMoves.length == 0) return;
+            showAvailableMoves(availableMoves);
+            selectedPiece = index;
+            if(showAvailableMoves.length > 0) return;
 
             isWhiteTurn = true;
         }
 
     });
+}
+
+function movePiece(piece, move){
+    let state = move[2];
+
+    if(state == 'e'){
+        board[move[0]][move[1]] = board[piece[0]][piece[1]];
+        board[piece[0]][piece[1]] = '.';
+    }else{
+        let killedPiece = board[move[0]][move[1]];
+        
+        board[move[0]][move[1]] = board[piece[0]][piece[1]];
+        board[piece[0]][piece[1]] = '.';
+    }
+}
+
+function moveElements(piece, move){
+    let element = $('.square').eq(getElementIndex(piece)).html();
+    let elementId = $('.square').eq(getElementIndex(piece)).attr('id');
+
+    $('.square').eq(getElementIndex(piece)).html('');
+    $('.square').eq(getElementIndex(piece)).attr('id', '');
+
+    $('.square').eq(getElementIndex(move)).html(element);
+    $('.square').eq(getElementIndex(move)).attr('id', elementId);
 }
 
 function getValidMoves(index, piece){
@@ -111,19 +162,28 @@ function getValidMoves(index, piece){
     }else if(name == 'n'){
         moves.push(...getKnightMoves(index, color));
     }else if(name == 'b'){
-        moves.push(...getForwardRightMoves(index, color));
-        moves.push(...getForwardLeftMoves(index, color));
-        moves.push(...getBackwardRightMoves(index, color));
-        moves.push(...getBackwardLeftMoves(index, color));
+        moves.push(...getForwardRightMoves(index, color, 8));
+        moves.push(...getForwardLeftMoves(index, color, 8));
+        moves.push(...getBackwardRightMoves(index, color, 8));
+        moves.push(...getBackwardLeftMoves(index, color, 8));
     }else if(name == 'q'){
         moves.push(...getForwardMoves(index, color, index[0]));
         moves.push(...getBackwardMoves(index, color, 7 - index[0]));
         moves.push(...getRightMoves(index, color, 7 - index[1]));
         moves.push(...getLeftMoves(index, color, index[1]));
-        moves.push(...getForwardRightMoves(index, color));
-        moves.push(...getForwardLeftMoves(index, color));
-        moves.push(...getBackwardRightMoves(index, color));
-        moves.push(...getBackwardLeftMoves(index, color));
+        moves.push(...getForwardRightMoves(index, color, 8));
+        moves.push(...getForwardLeftMoves(index, color, 8));
+        moves.push(...getBackwardRightMoves(index, color, 8));
+        moves.push(...getBackwardLeftMoves(index, color, 8));
+    }else if(name == 'k'){
+        moves.push(...getForwardMoves(index, color, 1));
+        moves.push(...getBackwardMoves(index, color, 1));
+        moves.push(...getRightMoves(index, color, 1));
+        moves.push(...getLeftMoves(index, color, 1));
+        moves.push(...getForwardRightMoves(index, color, 1));
+        moves.push(...getForwardLeftMoves(index, color, 1));
+        moves.push(...getBackwardRightMoves(index, color, 1));
+        moves.push(...getBackwardLeftMoves(index, color, 1));
     }
 
     return moves;
@@ -161,6 +221,7 @@ function getForwardMoves(index, color, steps){
 
     for(let i = 0; i < steps; i++){
         --row;
+        if(row < 0) return moves;
         let state = moveState(row, col, color);
 
         if(state == 'stop'){
@@ -210,6 +271,7 @@ function getBackwardMoves(index, color, steps){
 
     for(let i = 0; i < steps; i++){
         ++row;
+        if(row > 7) return moves;
         let state = moveState(row, col, color);
 
         if(state == 'stop'){
@@ -278,52 +340,30 @@ function getKnightMoves(index, color){
         row = index[0],
         col = index[1];
 
-        console.log(index);
-
-    //near row checek
-    for(let i = row - 1; i <= row + 1; i+=2){
-        if(i < 0 || i > 7 || col-2 < 0 || col+2 > 7) continue;
-        console.log('a')
-
-        let state = moveState(i, col-2, color);
+    const checkKnightState = (row, col, color) =>{
+        let state = moveState(row, col, color);
         if(state == 'ok'){
-            moves.push([i, col-2, 'e']);
+            moves.push([row, col, 'e']);
         }else if(state == 'target'){
-            moves.push([i, col-2, 't']);
-        }
-
-        state = moveState(i, col+2, color);
-        if(state == 'ok'){
-            moves.push([i, col+2, 'e']);
-        }else if(state == 'target'){
-            moves.push([i, col+2, 't']);
+            moves.push([row, col, 't']);
         }
     }
 
+    //near row checek
+    for(let i = row - 1; i <= row + 1; i+=2){
+        try { checkKnightState(i, col-2, color) } catch (error) {}
+        try { checkKnightState(i, col+2, color) } catch (error) {}
+    }
     //near col check
     for(let i = row - 2; i <= row + 2; i+=4){
-        if(i < 0 || i > 7 || col-1 < 0 || col+1 > 7) continue;
-        console.log('b')
-
-        let state = moveState(i, col-1, color);
-        if(state == 'ok'){
-            moves.push([i, col-1, 'e']);
-        }else if(state == 'target'){
-            moves.push([i, col-1, 't']);
-        }
-
-        state = moveState(i, col+1, color);
-        if(state == 'ok'){
-            moves.push([i, col+1, 'e']);
-        }else if(state == 'target'){
-            moves.push([i, col+1, 't']);
-        }
+        try { checkKnightState(i, col-1, color) } catch (error) {}
+        try { checkKnightState(i, col+1, color) } catch (error) {}
     }
 
     return moves;
 }
 
-function getForwardRightMoves(index, color){
+function getForwardRightMoves(index, color, steps){
     let moves = [],
         row = index[0],
         col = index[1];
@@ -339,12 +379,13 @@ function getForwardRightMoves(index, color){
             moves.push([row, col, 't']);
             return moves;
         }
+        if(--steps <= 0) return moves;
     }
 
     return moves;
 }
 
-function getForwardLeftMoves(index, color){
+function getForwardLeftMoves(index, color, steps){
     let moves = [],
         row = index[0],
         col = index[1];
@@ -360,12 +401,13 @@ function getForwardLeftMoves(index, color){
             moves.push([row, col, 't']);
             return moves;
         }
+        if(--steps <= 0) return moves;
     }
 
     return moves;
 }
 
-function getBackwardRightMoves(index, color){
+function getBackwardRightMoves(index, color, steps){
     let moves = [],
         row = index[0],
         col = index[1];
@@ -381,12 +423,13 @@ function getBackwardRightMoves(index, color){
             moves.push([row, col, 't']);
             return moves;
         }
+        if(--steps <= 0) break;
     }
 
     return moves;
 }
 
-function getBackwardLeftMoves(index, color){
+function getBackwardLeftMoves(index, color, steps){
     let moves = [],
         row = index[0],
         col = index[1];
@@ -402,6 +445,7 @@ function getBackwardLeftMoves(index, color){
             moves.push([row, col, 't']);
             return moves;
         }
+        if(--steps <= 0) break;
     }
 
     return moves;
@@ -423,9 +467,13 @@ function showAvailableMoves(moves){
         let state = moves[i][2];
 
         if(state == 'e'){
-            $('.square').eq(getElementIndex(move)).css('boxShadow', 'inset 0 0 1px 5px green');
+            $('.square').eq(getElementIndex(move)).css('background', 'rgba(53, 255, 77, 0.5)');
+            $('.square').eq(getElementIndex(move)).css('border', '1px solid white');
+            // $('.square').eq(getElementIndex(move)).css('boxShadow', 'inset 0 0 1px 5px green');
         }else{
-            $('.square').eq(getElementIndex(move)).css('boxShadow', 'inset 0 0 1px 5px red');
+            $('.square').eq(getElementIndex(move)).css('background', 'rgba(255, 56, 56, .5)');
+            $('.square').eq(getElementIndex(move)).css('border', '1px solid red');
+            // $('.square').eq(getElementIndex(move)).css('boxShadow', 'inset 0 0 1px 5px red');
         }
     }
 }

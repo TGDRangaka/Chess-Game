@@ -20,6 +20,7 @@ body {
     position: relative;
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
+    background-image: url('/assets/natural-wooden-background.jpg');
 }
 
 .square {
