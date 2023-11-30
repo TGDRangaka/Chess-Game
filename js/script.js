@@ -4,7 +4,7 @@ let board = [
     ['.', '.', '.', '.', '.', '.', '.', '.'],
     ['.', '.', '.', '.', '.', '.', '.', '.'],
     ['.', '.', '.', '.', '.', '.', '.', '.'],
-    ['.', 'bp2', '.', '.', '.', '.', '.', '.'],
+    ['.', '.', '.', '.', '.', '.', '.', '.'],
     ['wp1', 'wp2', 'wp3', 'wp4', 'wp5', 'wp6', 'wp7', 'wp8'],
     ['wr1', 'wn1', 'wb1', 'wq', 'wk', 'wb2', 'wn2', 'wr2']
 ];
@@ -58,6 +58,10 @@ for(let i = 0; i < 64; i++){
         let index = getClickedIndex(i);
         let piece = board[index[0]][index[1]];
 
+        // check if king is checked
+        
+
+        // move piece if moves exits
         if(availableMoves.length > 0){
             let move = availableMoves.findIndex((i)=>{
                 return getElementIndex(i) == getElementIndex(index);
@@ -76,10 +80,12 @@ for(let i = 0; i < 64; i++){
             }
         }
 
+        // do nothing for empty cells click
         if(piece == '.'){
             return;
         }
 
+        // process moves for seleted piece
         if(isWhiteTurn){
             setBoardDefaultColors();
             if(piece.charAt(0) == 'b') return;
@@ -477,3 +483,4 @@ function showAvailableMoves(moves){
         }
     }
 }
+
